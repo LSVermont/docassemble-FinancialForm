@@ -4,6 +4,15 @@ include:
   - docassemble.ALAnyState:any_state.yml
   - docassemble.ALToolbox:phone-number-validation.yml
 ---
+features:
+  css: style.css
+---
+objects:
+  - al_logo: DAStaticFile.using(filename="LSV_bug.png")
+---
+images:
+  big_logo: LSV_logo.png 
+---
 metadata:
   title: >-
     Financial affidavit
