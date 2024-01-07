@@ -4,15 +4,6 @@ include:
   - docassemble.ALAnyState:any_state.yml
   - docassemble.ALToolbox:phone-number-validation.yml
 ---
-features:
-  css: style.css
----
-objects:
-  - al_logo: DAStaticFile.using(filename="LSV_bug.png")
----
-images:
-  big_logo: LSV_logo.png 
----
 metadata:
   title: >-
     Financial affidavit
@@ -92,7 +83,7 @@ code: |
 
   users[0].birthdate
   users[0].address.address
-  user[0].email
+  users[0].email
   
   set_progress(16)
   
@@ -258,21 +249,48 @@ question: |
 subquestion: |
   Include at least **one way** to reach you. 
 fields:  
-  - Daytime phone number: user[0].daytime_phone_number
+  - Daytime phone number: users[0].daytime_phone_number
     datatype: al_international_phone
     required: False
-  - Evening phone number: user[0].evening_phone_number
+  - Evening phone number: users[0].evening_phone_number
     datatype: al_international_phone
     required: False
-  - Email: user[0].email    
+  - Email: users[0].email    
     datatype: email
     required: False      
 validation code: |
   if (not showifdef('users[0].daytime_phone_number') and \
-      (not showifdef('user[0].email')) and \
-      (not showifdef('user[0].evening_phone_number'))):
+      (not showifdef('users[0].email')) and \
+      (not showifdef('users[0].evening_phone_number'))):
     validation_error(word("You need to provide at least one contact method."))
 ---
+id: your name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+    - users[0].name.middle
+    - users[0].name.suffix
+question:  |
+  What is your name?
+fields:
+  - code: |
+      users[0].name_fields()
+---
+code: |
+  if user_ask_role == "plaintiff":
+    plaintiffs_name = users[0].name
+    plaintiffs_birthdate = users[0].birthdate
+    defendants_name = other_parties[0].name
+    defendants_birthdate = other_parties[0].birthdate
+    
+  else: 
+    defendants_name = users[0].name
+    defendants_birthdate = users[0].birthdate
+    plaintiffs_name = other_parties[0].name
+    plaintiffs_birthdate = other_parties[0].birthdate
+---
+
+
 sets:
   - other_parties[i].name.first
   - other_parties[i].name.last
@@ -280,14 +298,20 @@ sets:
   - other_parties[i].name.suffix
 id: names of opposing parties
 question: |
+  % if user_ask_role == "plaintiff":
   Name of the **defendant** in this matter
+  % elif user_ask_role == "defendant":
+  Name of the **plaintiff** in this matter
+  % else:
+  Name of other party in this matter
+  % endif
 fields:
   - code: |
       other_parties[i].name_fields(person_or_business='person')
 ---
 id: Gather other parties contact information
 question: |
-  What is ${ other_parties[0] }'s contact information?
+  ${plaintiffs_name } What is ${ other_parties[0] }'s contact information?
 subquestion: |
   Include at least **one way** to reach you. 
 fields:  
@@ -1811,19 +1835,19 @@ question: |
 subquestion: |
   Include at least **one way** to reach you. 
 fields:  
-  - Daytime phone number: user[0].daytime_phone_number
+  - Daytime phone number: users[0].daytime_phone_number
     datatype: al_international_phone
     required: False
-  - Evening phone number: user[0].evening_phone_number
+  - Evening phone number: users[0].evening_phone_number
     datatype: al_international_phone
     required: False
-  - Email: user[0].email    
+  - Email: users[0].email    
     datatype: email
     required: False      
 validation code: |
-  if (not showifdef('user[0].daytime_phone_number') and \
-      (not showifdef('user[0].email')) and \
-      (not showifdef('user[0].evening_phone_number'))):
+  if (not showifdef('users[0].daytime_phone_number') and \
+      (not showifdef('users[0].email')) and \
+      (not showifdef('users[0].evening_phone_number'))):
     validation_error(word("You need to provide at least one contact method."))
     
 #---
@@ -1925,14 +1949,14 @@ review:
     button: |
       **Other name**:
       ${ other_name }
-  - Edit: user[0].evening_phone_number
+  - Edit: users[0].evening_phone_number
     button: |
       **User evening phone number**:
-      ${ user[0].evening_phone_number }
-  - Edit: user[0].daytime_phone_number
+      ${ users[0].evening_phone_number }
+  - Edit: users[0].daytime_phone_number
     button: |
       **User daytime phone number**:
-      ${ user[0].daytime_phone_number }
+      ${ users[0].daytime_phone_number }
 
   - Edit: user_own_real_estate
     button: |
@@ -3734,27 +3758,27 @@ attachment:
       - "trial_court_county": ${ trial_court.address.county }
       - "docket_number": ${ docket_number }
       - "case_name": ${ case_name }
-      - "users1_birthdate": ${ users[0].birthdate.format() }
-      - "other_parties1_birthdate": ${ other_parties[0].birthdate.format() }
-      - "other_parties1_name": ${ other_parties[0] }
-      - "users1_name1": ${ users1_name1 }
+      - "plaintiffs_birthdate": ${ plaintiffs_birthdate}
+      - "defendants_birthdate": ${ defendants_birthdate }
+      - "defendants_name": ${ defendants_name }
+      - "plaintiffs_name": ${ plaintiffs_name }
       
       - "user_is_plaintiff": ${ user_ask_role == "plaintiff" }
       - "user_is_defendant": ${ user_ask_role == "defendant" }
       - "user_is_other": ${ user_ask_role == "other" }
       
       - "other_name": ${ other_name }
-      - "user_name": ${ users[0] }
-      - "user_mailing_address_line_one": ${ users[0].mailing_address.line_one() }
-      - "user_address_line_one": ${ users[0].address.line_one() }
-      - "user_mailing_address_line_two": ${ users[0].mailing_address.line_two() }
-      - "user_address_line_two": ${ users[0].address.line_two() }
-      - "user_evening_phone_number": ${ user[0].evening_phone_number }
-      - "user_daytime_phone_number": ${ user[0].daytime_phone_number }
-      - "user_email": ${ user[0].email }
-      - "user_signature": ${ user[0].signature }
-      - "signature_date_1": ${ signature_date_1 }
-      - "user_name_2": ${ user_name_2 }
+      - "users1_name": ${ users[0] }
+      - "users1_mailing_address_line_one": ${ users[0].mailing_address.line_one() }
+      - "users1_address_line_one": ${ users[0].address.line_one() }
+      - "users1_mailing_address_line_two": ${ users[0].mailing_address.line_two() }
+      - "users1_address_line_two": ${ users[0].address.line_two() }
+      - "users1_evening_phone_number": ${ users[0].evening_phone_number }
+      - "users1_daytime_phone_number": ${ users[0].daytime_phone_number }
+      - "users1_email": ${ users[0].email }
+      - "users1_signature": ${ users[0].signature }
+      - "signature_date": ${ signature_date_1 }
+      - "users1_name": ${ users[0].name }
       
       
       - "user_own_real_estate": ${ user_own_real_estate }
